@@ -1,0 +1,23 @@
+{
+  "name": "steamsplitscreen",
+  "version": "0.0.1",
+  "description": "Utility app for the awesome splitscreen.me project; allowing users to filter their steam library by third-party supported splitscreen games.",
+  "main": "./src/app.js",
+  "scripts": {
+    "test": "node --env-file=./conf/sample.env ./src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThomasHaz/SteamSplitScreen.git"
+  },
+  "author": "Thomas Haz",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/ThomasHaz/SteamSplitScreen/issues"
+  },
+  "homepage": "https://github.com/ThomasHaz/SteamSplitScreen#readme",
+  "dependencies": {
+    "express": "^4.19.2",
+    "node-fetch": "^3.3.2"
+  }
+}
