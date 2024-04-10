@@ -51,7 +51,7 @@ async function GetTokenIfNeeded() {
 }
 
 app.get('/', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
   res.send(
     [
       `<a href="${config.web.host}:${config.web.port}/steam/splitscreen">/steam/splitscreen</a>`,
@@ -73,7 +73,7 @@ app.get('/', async (req, res) => {
 
 
 app.get('/steam/splitscreen', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
 
   const steam_url = `${config.web.host}:${config.web.port}/steam/igdb/-1`
   const split_url = `${config.web.host}:${config.web.port}/splitscreen/igdb`
@@ -109,7 +109,7 @@ app.get('/steam/splitscreen', async (req, res) => {
 
 
 app.get('/steam/splitscreen/handlers', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
 
   const url = `${config.web.host}:${config.web.port}/steam/igdb/-1`
   const url2 = `${config.web.host}:${config.web.port}/splitscreen/igdb`
@@ -164,12 +164,13 @@ app.get('/steam', async (req, res) => {
 })
 
 
-app.get('/steam/igdb/all', (req, res) => res.redirect(`${config.web.host}:${config.web.port}/steam/igdb/-1`))
-app.get('/steam/igdb', (req, res) => res.redirect(`${config.web.host}:${config.web.port}/steam/igdb/0`))
+app.get('/steam/igdb/all', async (req, res) => res.redirect(`${config.web.host}:${config.web.port}/steam/igdb/-1`))
+app.get('/steam/igdb', async (req, res) => res.redirect(`${config.web.host}:${config.web.port}/steam/igdb/0`))
 app.get('/steam/igdb/:page', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
   
   const steamGames = await getSteamGames()
+  console.log(steamGames)
   const game_count = steamGames.game_count
   const games = steamGames.games
   const owned_IDs = games.map(e => {
@@ -217,7 +218,7 @@ async function getSteamGames() {
 }
 app.get('/igdb', (req, res) => res.redirect(`${config.web.host}:${config.web.port}/igdb/0`))
 app.get('/igdb/:page', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
   
   const url = `${config.web.host}:${config.web.port}/splitscreen/igdb`
   const options = {
@@ -234,7 +235,7 @@ app.get('/igdb/:page', async (req, res) => {
 })
 
 async function getIGDbGames(igdb_ids = [], steam_ids = [], page = 0) {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
   
   const url = 'https://api.igdb.com/v4/external_games'
   query_str = igdb_ids.length > 0 ? `game = (${igdb_ids.join()})` : `uid = (${steam_ids.join()})`
@@ -263,7 +264,7 @@ app.get('/splitscreen', async (req, res) => {
 })
 
 app.get('/splitscreen/igdb', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
   
   const json = await getSplitScreen()
   const game_count = json.length
@@ -291,5 +292,5 @@ async function getSplitScreen() {
 }
 
 app.listen(config.web.port, () => {
-  console.log(`Example app listening on port ${config.web.port}`)
+  console.log(`Steam Split Screen listening on port ${config.web.port}`)
 })
