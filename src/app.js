@@ -3,7 +3,7 @@ const fetch = (...args) =>
 
 const fs = require('node:fs');
 
-const config = require('../conf/config.js');
+const config = require('conf/config.js');
 
 const express = require('express')
 const app = express()
