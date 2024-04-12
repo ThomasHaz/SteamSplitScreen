@@ -1,6 +1,8 @@
 const fetch = (...args) =>
   import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
+const fs = require('node:fs');
+
 const config = require('../conf/config.js');
 
 const express = require('express')
@@ -51,7 +53,7 @@ async function GetTokenIfNeeded() {
 }
 
 app.get('/', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
   res.send(
     [
       `<a href="${config.web.host}:${config.web.port}/steam/splitscreen">/steam/splitscreen</a>`,
@@ -73,7 +75,7 @@ app.get('/', async (req, res) => {
 
 
 app.get('/steam/splitscreen', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
 
   const steam_url = `${config.web.host}:${config.web.port}/steam/igdb/-1`
   const split_url = `${config.web.host}:${config.web.port}/splitscreen/igdb`
@@ -99,8 +101,9 @@ app.get('/steam/splitscreen', async (req, res) => {
       return { igdb_id: e.game, steam_id: parseInt(e.uid), name: e.name }
     })
 
-    console.log(filtered.length);
-    res.send(`${JSON.stringify(filtered, null, 4)}`)
+    const ret = JSON.stringify(filtered, null, 4)
+    writeOut(req.url + "/" + config.steam.user, config.steam.user, ret)
+    res.send(ret)
   } catch (err) {
     console.log(err)
   }
@@ -109,7 +112,7 @@ app.get('/steam/splitscreen', async (req, res) => {
 
 
 app.get('/steam/splitscreen/handlers', async (req, res) => {
-  GetTokenIfNeeded()
+  await GetTokenIfNeeded()
 
   const url = `${config.web.host}:${config.web.port}/steam/igdb/-1`
   const url2 = `${config.web.host}:${config.web.port}/splitscreen/igdb`
@@ -146,7 +149,9 @@ app.get('/steam/splitscreen/handlers', async (req, res) => {
         handler: handlers.find(y => y.gameId == x.igdb_id)
       }
     });
-    res.send(`${JSON.stringify(reso, null, 4)}`)
+    const ret = JSON.stringify(reso, null, 4)
+    writeOut(req.url + "/" + config.steam.user, config.steam.user, ret)
+    res.send(ret)
   } catch (err) {
     console.log(err)
   }
@@ -160,16 +165,19 @@ app.get('/steam', async (req, res) => {
   const owned_IDs = games.map(e => {
     return e.appid
   })
-  res.send(owned_IDs)
+  const ret = JSON.stringify(owned_IDs)
+  writeOut(req.url + "/" + config.steam.user, config.steam.user, ret)
+  res.send(ret)
 })
 
 
-app.get('/steam/igdb/all', (req, res) => res.redirect(`${config.web.host}:${config.web.port}/steam/igdb/-1`))
-app.get('/steam/igdb', (req, res) => res.redirect(`${config.web.host}:${config.web.port}/steam/igdb/0`))
+app.get('/steam/igdb/all', async (req, res) => res.redirect(`${config.web.host}:${config.web.port}/steam/igdb/-1`))
+app.get('/steam/igdb', async (req, res) => res.redirect(`${config.web.host}:${config.web.port}/steam/igdb/0`))
 app.get('/steam/igdb/:page', async (req, res) => {
-  GetTokenIfNeeded()
-  
+  await GetTokenIfNeeded()
+
   const steamGames = await getSteamGames()
+  console.log(steamGames)
   const game_count = steamGames.game_count
   const games = steamGames.games
   const owned_IDs = games.map(e => {
@@ -179,7 +187,9 @@ app.get('/steam/igdb/:page', async (req, res) => {
   try {
     if (req.params.page >= 0) {
       const json = await getIGDbGames(igdb_ids = [], steam_ids = owned_IDs, page = req.params.page)
-      res.send(json)
+      const ret = JSON.stringify(json)
+      writeOut(req.url + "/" + config.steam.user, config.steam.user, ret)
+      res.send(ret)
     } else {
       var json = [];
       var index = 0;
@@ -192,7 +202,9 @@ app.get('/steam/igdb/:page', async (req, res) => {
         sleep(500);
       } while (tmp.length == 100);
       console.log(`${json.length} / ${game_count}`)
-      res.send(json)
+      const ret = JSON.stringify(json)
+      writeOut(req.url + "/" + config.steam.user, config.steam.user, ret)
+      res.send(ret)
     }
 
 
@@ -217,8 +229,8 @@ async function getSteamGames() {
 }
 app.get('/igdb', (req, res) => res.redirect(`${config.web.host}:${config.web.port}/igdb/0`))
 app.get('/igdb/:page', async (req, res) => {
-  GetTokenIfNeeded()
-  
+  await GetTokenIfNeeded()
+
   const url = `${config.web.host}:${config.web.port}/splitscreen/igdb`
   const options = {
     method: 'GET',
@@ -227,15 +239,17 @@ app.get('/igdb/:page', async (req, res) => {
     const ids = await fetch(url, options);
     igdb_ids = (await ids.json()).ss_igdb_ids
     const json = await getIGDbGames(igdb_ids = igdb_ids, steam_ids = [], page = req.params.page)
-    res.send(json)
+    const ret = JSON.stringify(json)
+    writeOut(req.url + "/" + config.steam.user, config.steam.user, ret)
+    res.send(ret)
   } catch (err) {
     console.log(err)
   }
 })
 
 async function getIGDbGames(igdb_ids = [], steam_ids = [], page = 0) {
-  GetTokenIfNeeded()
-  
+  await GetTokenIfNeeded()
+
   const url = 'https://api.igdb.com/v4/external_games'
   query_str = igdb_ids.length > 0 ? `game = (${igdb_ids.join()})` : `uid = (${steam_ids.join()})`
 
@@ -259,19 +273,23 @@ async function getIGDbGames(igdb_ids = [], steam_ids = [], page = 0) {
 
 app.get('/splitscreen', async (req, res) => {
   const json = await getSplitScreen()
-  res.send(json)
+  const ret = JSON.stringify(json)
+  writeOut(req.url + "/" + config.steam.user, config.steam.user, ret)
+  res.send(ret)
 })
 
 app.get('/splitscreen/igdb', async (req, res) => {
-  GetTokenIfNeeded()
-  
+  await GetTokenIfNeeded()
+
   const json = await getSplitScreen()
   const game_count = json.length
   const game_IDs = json.map(e => {
     return e.gameId
   })
   console.log(game_count)
-  res.send({ ss_igdb_ids: game_IDs })
+  const ret = JSON.stringify({ ss_igdb_ids: game_IDs })
+  writeOut(req.url + "/" + config.steam.user, config.steam.user, ret)
+  res.send(ret)
 })
 
 
@@ -291,5 +309,51 @@ async function getSplitScreen() {
 }
 
 app.listen(config.web.port, () => {
-  console.log(`Example app listening on port ${config.web.port}`)
+  console.log(`Steam Split Screen listening on port ${config.web.port}`)
 })
+
+
+function ensureExists(path, mask, cb) {
+  if (typeof mask == 'function') { // Allow the `mask` parameter to be optional
+    cb = mask;
+    mask = 0o744;
+  }
+  fs.mkdir(path, mask, function (err) {
+    if (err) {
+      if (err.code == 'EEXIST') cb(null); // Ignore the error if the folder already exists
+      else cb(err); // Something else went wrong
+    } else cb(null); // Successfully created folder
+  });
+}
+
+
+function writeOut(path, filename, content) {
+  const filepath = __dirname + '/cache' + path + "/";
+  ensureExists(filepath, { recursive: true }, async function (err) {
+    if (err) {
+      console.error(err)
+    }// Handle folder creation error
+    else { // All good  
+      fs.readdir(filepath, (err, files) => {
+        if (err) {
+          console.error(err);
+        } else {
+          const count = files.length;
+
+          const fn = filepath + filename + "-" + count + ".json"
+
+          fs.writeFile(fn, content, err => {
+            if (err) {
+              console.error(err);
+            } else {
+              console.log(fn + " written to \n" + filepath)
+            }
+          });
+        }
+
+      });
+
+    }
+  });
+}
+
